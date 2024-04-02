@@ -11,7 +11,7 @@ async def insert_into_city(connection, city_data):
                 existing_link = await cursor.fetchone()
                 if not existing_link:  # Если нет совпадений, то добавляем данные в список для вставки
                     insert_values.append((G_id, location, link))
-            print(f"{datetime.now()} :[INFO DB] Unique pool {len(insert_values)}, update pool {len(city_data)-len(insert_values)}")
+            print(f"\r\033[K{datetime.now()} :[INFO DB] City Unique pool {len(insert_values)}", end="", flush=True)
             if insert_values:  # Проверяем, есть ли данные для вставки
                 insert_sql = """
                     INSERT INTO city (G_id, location, link) 

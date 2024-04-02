@@ -1,3 +1,5 @@
+from datetime import datetime
+
 async def insert_into_restaurants(connection, restaurants_data):
     try:
         async with connection.cursor() as cursor:
@@ -20,7 +22,9 @@ async def insert_into_restaurants(connection, restaurants_data):
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 await cursor.executemany(insert_sql, unique_restaurants_data)
+                
+            print(f"\r\033[K{datetime.now()} :[INFO DB] Restaurants unique pool: {len(unique_restaurants_data)} update pool: {len(restaurants_data)-len(unique_restaurants_data)}", end="", flush=True)
 
-            await connection.commit()
+            await connection.commit()  # Выполняем коммит только после того, как все данные будут добавлены
     except Exception as e:
-        print(e)
+        print(datetime.now(),':[ERROR] inserting/restaraunts: ', e)
