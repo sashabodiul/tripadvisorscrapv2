@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS restaraunts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    breadcrumbs JSON,
+    rate VARCHAR(255),
+    name_rest VARCHAR(255),
+    reviews_count INT,
+    prices VARCHAR(255),
+    telephone VARCHAR(255),
+    location VARCHAR(255),
+    website_link VARCHAR(1000),
+    position_in_rating VARCHAR(255),
+    email VARCHAR(255),
+    food_rating VARCHAR(255),
+    service_rating VARCHAR(255),
+    value_rating VARCHAR(255),
+    atmosphere_rating VARCHAR(255),
+    g_code VARCHAR(255),
+    link VARCHAR(1000),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
