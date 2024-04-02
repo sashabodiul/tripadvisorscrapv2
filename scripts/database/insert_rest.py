@@ -12,7 +12,16 @@ async def insert_into_restaurants(connection, restaurants_data):
                 if not existing_link:  # Если нет совпадений, добавляем запись в список для вставки
                     unique_restaurants_data.append(data)
 
-            if unique_restaurants_data:  # Если есть уникальные записи для вставки
+            # Проверяем уникальность ссылок в unique_restaurants_data
+            unique_links = set()
+            unique_restaurants_data_no_duplicates = []
+            for data in unique_restaurants_data:
+                link = data[-1]
+                if link not in unique_links:
+                    unique_links.add(link)
+                    unique_restaurants_data_no_duplicates.append(data)
+
+            if unique_restaurants_data_no_duplicates:  # Если есть уникальные записи для вставки
                 insert_sql = """
                     INSERT INTO restaraunts (
                         breadcrumbs, rate, name_rest, reviews_count, prices, 
@@ -21,9 +30,9 @@ async def insert_into_restaurants(connection, restaurants_data):
                         atmosphere_rating, g_code, link
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
-                await cursor.executemany(insert_sql, unique_restaurants_data)
+                await cursor.executemany(insert_sql, unique_restaurants_data_no_duplicates)
                 
-            print(f"\r\033[K{datetime.now()} :[INFO DB] Restaurants unique pool: {len(unique_restaurants_data)} update pool: {len(restaurants_data)-len(unique_restaurants_data)}", end="", flush=True)
+            print(f"\r\033[K{datetime.now()} :[INFO DB] Restaurants unique pool: {len(unique_restaurants_data_no_duplicates)} update pool: {len(restaurants_data)-len(unique_restaurants_data_no_duplicates)}", end="", flush=True)
 
             await connection.commit()  # Выполняем коммит только после того, как все данные будут добавлены
     except Exception as e:
