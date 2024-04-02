@@ -108,7 +108,7 @@ async def main():
         batch_counter = await batch.load_batch_counter()
         start_index = batch_counter // 50000
         tasks = [process_file(filename, semaphore, start_index) for filename in files[start_index:]]
-        done, _ = await asyncio.wait(tasks, timeout=5.0)  # Ожидаем выполнение всех задач с тайм-аутом 5 секунд
+        done, _ = await asyncio.wait(tasks, timeout=TIMEOUT_TASK)  # Ожидаем выполнение всех задач с тайм-аутом 5 секунд
 
         # Удаляем завершенные задачи из списка
         tasks = [task for task in tasks if task not in done]

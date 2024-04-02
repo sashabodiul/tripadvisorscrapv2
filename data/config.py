@@ -9,6 +9,7 @@ DB_NAME = os.environ.get('DB_NAME')
 THREADS_COUNT = int(os.environ.get('THREADS_COUNT'))
 BATCH_COUNT = int(os.environ.get('BATCH_COUNTER'))
 MAIN_DOMAIN = os.environ.get('MAIN_DOMAIN')
+TIMEOUT_TASK = int(os.environ.get('TIMEOUT_TASK'))
 
 with open('data/security/proxy.txt', 'r') as file:
     # Читаем строки из файла и удаляем лишние символы переноса строки
