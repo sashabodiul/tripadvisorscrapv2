@@ -5,6 +5,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import NameOID
 import uuid
+import tempfile
 
 
 async def generate_self_signed_certificate():
@@ -49,11 +50,8 @@ async def generate_self_signed_certificate():
     ).sign(private_key, hashes.SHA256())
 
     # Создание уникальных имен для временных файлов ключа и сертификата
-    key_filename = f"/var/folders/sq/c7pp9n5x4cxgjw5n5ppm4yk00000gn/T/{uuid.uuid4()}.key"
-    cert_filename = f"/var/folders/sq/c7pp9n5x4cxgjw5n5ppm4yk00000gn/T/{uuid.uuid4()}.cert"
-
-    # Сохранение закрытого ключа во временный файл
-    with open(key_filename, "wb") as key_file:
+    with tempfile.NamedTemporaryFile(delete=False) as key_file:
+        key_filename = key_file.name
         private_key_pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
@@ -61,8 +59,8 @@ async def generate_self_signed_certificate():
         )
         key_file.write(private_key_pem)
 
-    # Сохранение сертификата во временный файл
-    with open(cert_filename, "wb") as cert_file:
+    with tempfile.NamedTemporaryFile(delete=False) as cert_file:
+        cert_filename = cert_file.name
         cert_pem = certificate.public_bytes(serialization.Encoding.PEM)
         cert_file.write(cert_pem)
 
