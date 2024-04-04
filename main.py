@@ -1,5 +1,5 @@
 from scripts.data import get_files, read_data_from_file
-from scripts.utils import scrape_data,batch,get_result_from_page,check_real
+from scripts.utils import emulation_scrape, scrape_data,batch,get_result_from_page,check_real
 from scripts.database import insert_city,insert_rest
 import random
 from data.config import *
@@ -40,67 +40,72 @@ async def process_file(filename, semaphore, xml_index):
                                                             user_agent=str(user_agent),
                                                             url=str(rest_url))
                 except Exception as e:
-                    await write_log(str(e))
+                    try:
+                        emulation_scrape.get_html_with_delay(url=str(rest_url),
+                                                            old_domain=str(old_domain),
+                                                            new_domain=str(new_domain))
+                    except Exception as e:
+                        link_index-=1
+                        await write_log(str(e))
                 try:
                     result = await get_result_from_page.get_all_data_from_restaurants(content, rest_url)
                 except Exception as e:
+                    link_index-=1
                     await write_log(str(e))
-                if result is not None and not result.get('breadcrumbs', []):
-                    real = await check_real.check_true_page(content, rest_url)
-                    if real:
-                        link_index -= 1
-                        continue
-                    else:
-                        continue
-                else:
-                    if 'restaraunts_data' not in results_data:
-                        results_data['restaraunts_data'] = []
-                    is_insert_needed = False
-
-                    if len(results_data['restaraunts_data']) >= BATCH_COUNT and not is_insert_needed:
-                        is_insert_needed = True
-                        batch_counter += BATCH_COUNT
-                        await batch.save_batch_counter(batch_counter)
-                        async with aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASS, db=DB_NAME) as pool:
-                            async with pool.acquire() as connection:
-                                print(f"\r\033[K{datetime.now()} :[INFO] starting create pool and connecting to database", end="", flush=True)
-                                await write_log("[INFO] starting create pool and connecting to database")
-                                await insert_rest.insert_into_restaurants(connection, results_data['restaraunts_data'])
-                                await insert_city.insert_into_city(connection, results_data['city_data'])
-                            await connection.commit()
-                        results_data['restaraunts_data'].clear()
-                        results_data['city_data'].clear()
-                    if isinstance(result['breadcrumbs'], str):
-                        position_in_rating = str(next(iter(result['position_in_rating']))) if result['position_in_rating'] else None
-                        if position_in_rating:
-                            city = position_in_rating.split(' ')[-1] if len(position_in_rating.split(' ')) > 2 else ''
+                    if result is not None and not result.get('breadcrumbs', []):
+                        real = await check_real.check_true_page(content, rest_url)
+                        if real:
+                            link_index -= 1
+                            continue
                         else:
-                            city = ''
-                        if result['breadcrumbs']:
-                            city = result['breadcrumbs'].split(';')[-3].replace(' ', '') if len(result['breadcrumbs'].split(';')) > 5 else result['breadcrumbs'].split(';')[2].replace(' ', '')
-                        reviews_count = float(result['reviews_count']) if result['reviews_count'] is not None and result['reviews_count'].isdigit() else 0
-                        results_data['city_data'].append((result['g_code'], city if city else 'NULL', 'https://www.tripadvisor.com/Tourism-g' + result['g_code']))
-                        breadcrumbs = result['breadcrumbs'].replace('\xa0', ' ')
-                        breadcrumbs = breadcrumbs.replace(' ', '')
-                        results_data['restaraunts_data'].append((json.dumps(breadcrumbs),
-                                                                    result['rating'] if result['rating'] is not None else "NULL",
-                                                                    result['name'] if result['name'] is not None else "NULL",
-                                                                    reviews_count if reviews_count is not None else 0,
-                                                                    result['prices'] if result['prices'] is not None else "NULL",
-                                                                    result['telephone'] if result['telephone'] is not None else 'NULL',
-                                                                    result['location'] if result['location'] is not None else 'NULL',
-                                                                    result['website_link'] if result['website_link'] is not None else 'NULL',
-                                                                    position_in_rating if position_in_rating is not None else 'NULL',
-                                                                    result['email'] if result['email'] is not None else 'NULL',
-                                                                    result['food_rating'] if result['food_rating'] is not None else 'NULL',
-                                                                    result['service_rating'] if result['service_rating'] is not None else 'NULL',
-                                                                    result['value_rating'] if result['value_rating'] is not None else 'NULL',
-                                                                    result['atmosphere_rating'] if result['atmosphere_rating'] is not None else 'NULL',
-                                                                    result['g_code'] if result['g_code'] is not None else 'NULL',
-                                                                    result['link'] if result['link'] is not None else 'NULL'))
-                        print(f"\r\033[K{datetime.now()} - i: {link_index}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
+                            continue
+                if 'restaraunts_data' not in results_data:
+                    results_data['restaraunts_data'] = []
+                is_insert_needed = False
 
-import asyncio
+                if len(results_data['restaraunts_data']) >= BATCH_COUNT and not is_insert_needed:
+                    is_insert_needed = True
+                    batch_counter += BATCH_COUNT
+                    await batch.save_batch_counter(batch_counter)
+                    async with aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASS, db=DB_NAME) as pool:
+                        async with pool.acquire() as connection:
+                            print(f"\r\033[K{datetime.now()} :[INFO] starting create pool and connecting to database", end="", flush=True)
+                            await write_log("[INFO] starting create pool and connecting to database")
+                            await insert_rest.insert_into_restaurants(connection, results_data['restaraunts_data'])
+                            await insert_city.insert_into_city(connection, results_data['city_data'])
+                        await connection.commit()
+                    results_data['restaraunts_data'].clear()
+                    results_data['city_data'].clear()
+                if isinstance(result['breadcrumbs'], str):
+                    position_in_rating = str(next(iter(result['position_in_rating']))) if result['position_in_rating'] else None
+                    if position_in_rating:
+                        city = position_in_rating.split(' ')[-1] if len(position_in_rating.split(' ')) > 2 else ''
+                    else:
+                        city = ''
+                    if result['breadcrumbs']:
+                        city = result['breadcrumbs'].split(';')[-3].replace(' ', '') if len(result['breadcrumbs'].split(';')) > 5 else result['breadcrumbs'].split(';')[2].replace(' ', '')
+                    reviews_count = float(result['reviews_count']) if result['reviews_count'] is not None and result['reviews_count'].isdigit() else 0
+                    results_data['city_data'].append((result['g_code'], city if city else 'NULL', 'https://www.tripadvisor.com/Tourism-g' + result['g_code']))
+                    breadcrumbs = result['breadcrumbs'].replace('\xa0', ' ')
+                    breadcrumbs = breadcrumbs.replace(' ', '')
+                    results_data['restaraunts_data'].append((json.dumps(breadcrumbs),
+                                                                result['rating'] if result['rating'] is not None else "NULL",
+                                                                result['name'] if result['name'] is not None else "NULL",
+                                                                reviews_count if reviews_count is not None else 0,
+                                                                result['prices'] if result['prices'] is not None else "NULL",
+                                                                result['telephone'] if result['telephone'] is not None else 'NULL',
+                                                                result['location'] if result['location'] is not None else 'NULL',
+                                                                result['website_link'] if result['website_link'] is not None else 'NULL',
+                                                                position_in_rating if position_in_rating is not None else 'NULL',
+                                                                result['email'] if result['email'] is not None else 'NULL',
+                                                                result['food_rating'] if result['food_rating'] is not None else 'NULL',
+                                                                result['service_rating'] if result['service_rating'] is not None else 'NULL',
+                                                                result['value_rating'] if result['value_rating'] is not None else 'NULL',
+                                                                result['atmosphere_rating'] if result['atmosphere_rating'] is not None else 'NULL',
+                                                                result['g_code'] if result['g_code'] is not None else 'NULL',
+                                                                result['link'] if result['link'] is not None else 'NULL'))
+                    print(f"\r\033[K{datetime.now()} - i: {link_index}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
+
 
 async def main():
     semaphore = asyncio.Semaphore(THREADS_COUNT)
