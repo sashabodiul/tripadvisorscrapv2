@@ -113,8 +113,9 @@ async def get_all_data_from_restaurants(content,url,restaraunt_index_error):
 
 async def fetch_html(url, headers):
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
-            return await response.text()
+            async with session.get(url, ssl=False) as response:
+                    return await response.text()
+
 
 async def test_getdata():
     url = "https://www.tripadvisor.com/Restaurant_Review-g1006488-d25237320-Reviews-Mantela_Restaurante-Zapopan_Guadalajara_Metropolitan_Area.html"

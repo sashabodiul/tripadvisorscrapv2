@@ -1,5 +1,5 @@
 from scripts.data import get_files, read_data_from_file
-from scripts.utils import emulation_scrape, scrape_data,batch,get_result_from_page,check_real
+from scripts.utils import emulation_scrape, scrape_data,batch,get_result_from_page,check_real, generate_ssl
 from scripts.database import insert_city,insert_rest
 import random
 from data.config import *
@@ -34,14 +34,22 @@ async def process_file(filename, semaphore, xml_index):
                 user_agent = random.choice(USER_AGENTS_LIST).strip()
                 rest_url = list_rest[link_index].strip()
                 try:
+                    # Где-то в вашем коде генерируется ключ и сертификат
+                    key_file_path, cert_file_path = await generate_ssl.generate_self_signed_certificate()
                     content = await scrape_data.scrape_data(proxy=random.choice(PROXY_LIST),
                                                             old_domain=str(old_domain),
                                                             new_domain=str(new_domain),
                                                             user_agent=str(user_agent),
-                                                            url=str(rest_url))
+                                                            url=str(rest_url),
+                                                            key_file_path=key_file_path,
+                                                            cert_file_path=cert_file_path)
+                    if "Please enable JS and disable any ad blocker" in content:
+                        content = emulation_scrape.get_html_with_delay(url=str(rest_url),
+                                                            old_domain=str(old_domain),
+                                                            new_domain=str(new_domain))
                 except Exception as e:
                     try:
-                        emulation_scrape.get_html_with_delay(url=str(rest_url),
+                        content = emulation_scrape.get_html_with_delay(url=str(rest_url),
                                                             old_domain=str(old_domain),
                                                             new_domain=str(new_domain))
                     except Exception as e:
