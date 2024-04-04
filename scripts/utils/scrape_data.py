@@ -26,8 +26,8 @@ async def scrape_data(proxy,old_domain,new_domain,user_agent, url):
         'Sec-Fetch-User': '?1',
         'TE': 'trailers'
         }
-        async with aiohttp.ClientSession(headers=headers) as session:
-            async with session.get(url) as response:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, ssl=False) as response:
                 if response.content_type == 'application/octet-stream' and response.headers.get('content-encoding') == 'br':
                     # Decode Brotli content
                     content = await response.read()
@@ -35,5 +35,6 @@ async def scrape_data(proxy,old_domain,new_domain,user_agent, url):
                     return decoded_content.decode('utf-8')
                 else:
                     return await response.text()
+
     except Exception as e:
-        print(datetime.now(),':[ERROR] scrap page: ', e, 'with url: ', url)
+        print(datetime.now(),': [ERROR] scrap page: ', e, 'with url: ', url)
