@@ -28,8 +28,11 @@ async def scrape_data(proxy, old_domain, new_domain, user_agent, url, key_file_p
         'user-agent': f"{user_agent}"
         }
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url=url, headers=headers, proxy=proxy,timeout=6) as response:
+        ssl_context = aiohttp.FrozenSSLContext()  # Создаем SSL контекст
+        ssl_context.verify_mode = aiohttp.WS_SSL_VERIFICATION_DEFAULT  # Устанавливаем режим проверки
+
+        async with aiohttp.ClientSession(ssl=ssl_context) as session:
+            async with session.get(url=url, headers=headers, proxy=proxy, timeout=6) as response:
                 return await response.text()
     except Exception as e:
         log_filename = 'data/logs/logfile.log'
