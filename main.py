@@ -56,11 +56,11 @@ async def process_file(filename, semaphore, xml_index):
                         link_index-=1
                         await write_log(str(e))
                 try:
-                    result = await get_result_from_page.get_all_data_from_restaurants(content, rest_url)
+                    result = await get_result_from_page.get_result_data(content, rest_url)
                 except Exception as e:
                     link_index-=1
                     await write_log(str(e))
-                    if result is not None and not result.get('breadcrumbs', []):
+                    if result is not None and not result.get('location'):
                         real = await check_real.check_true_page(content, rest_url)
                         if real:
                             link_index -= 1
@@ -84,35 +84,29 @@ async def process_file(filename, semaphore, xml_index):
                         await connection.commit()
                     results_data['restaraunts_data'].clear()
                     results_data['city_data'].clear()
-                if isinstance(result['breadcrumbs'], str):
-                    position_in_rating = str(next(iter(result['position_in_rating']))) if result['position_in_rating'] else None
-                    if position_in_rating:
-                        city = position_in_rating.split(' ')[-1] if len(position_in_rating.split(' ')) > 2 else ''
-                    else:
-                        city = ''
-                    if result['breadcrumbs']:
-                        city = result['breadcrumbs'].split(';')[-3].replace(' ', '') if len(result['breadcrumbs'].split(';')) > 5 else result['breadcrumbs'].split(';')[2].replace(' ', '')
-                    reviews_count = float(result['reviews_count']) if result['reviews_count'] is not None and result['reviews_count'].isdigit() else 0
-                    results_data['city_data'].append((result['g_code'], city if city else 'NULL', 'https://www.tripadvisor.com/Tourism-g' + result['g_code']))
-                    breadcrumbs = result['breadcrumbs'].replace('\xa0', ' ')
-                    breadcrumbs = breadcrumbs.replace(' ', '')
-                    results_data['restaraunts_data'].append((json.dumps(breadcrumbs),
-                                                                result['rating'] if result['rating'] is not None else "NULL",
-                                                                result['name'] if result['name'] is not None else "NULL",
-                                                                reviews_count if reviews_count is not None else 0,
-                                                                result['prices'] if result['prices'] is not None else "NULL",
-                                                                result['telephone'] if result['telephone'] is not None else 'NULL',
-                                                                result['location'] if result['location'] is not None else 'NULL',
-                                                                result['website_link'] if result['website_link'] is not None else 'NULL',
-                                                                position_in_rating if position_in_rating is not None else 'NULL',
-                                                                result['email'] if result['email'] is not None else 'NULL',
-                                                                result['food_rating'] if result['food_rating'] is not None else 'NULL',
-                                                                result['service_rating'] if result['service_rating'] is not None else 'NULL',
-                                                                result['value_rating'] if result['value_rating'] is not None else 'NULL',
-                                                                result['atmosphere_rating'] if result['atmosphere_rating'] is not None else 'NULL',
-                                                                result['g_code'] if result['g_code'] is not None else 'NULL',
-                                                                result['link'] if result['link'] is not None else 'NULL'))
-                    print(f"\r\033[K{datetime.now()} - i: {link_index}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
+                    results_data['restaraunts_data'].append(
+                                                            result['location'],
+                                                            result['reviews'],
+                                                            result['rating'],
+                                                            result['name'],
+                                                            result['email'],
+                                                            result['pos_in_rate'].replace('\xa0',''),
+                                                            result['number'],
+                                                            result['prices'],
+                                                            result['food_rating'],
+                                                            result['service_rating'],
+                                                            result['value_rating'],
+                                                            result['atmosphere_rating'],
+                                                            result['g_code'],
+                                                            result['city'],
+                                                            result['link'])
+                    substring_before_g_code = result['link'].split(result['g_code'])[0]
+
+                    # Replace 'Restaurant_Review' with 'Tourism' in the extracted substring
+                    city_link = substring_before_g_code.replace('Restaurant_Review', 'Tourism')
+                    city_code = result['g_code']
+                    results_data['city_data'].append(city_code,result['location'],city_link)
+                print(f"\r\033[K{datetime.now()} - i: {link_index}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
 
 
 async def main():

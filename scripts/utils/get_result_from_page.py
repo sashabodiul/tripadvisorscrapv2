@@ -113,3 +113,64 @@ async def get_all_data_from_restaurants(content,url):
         }
     except Exception as e:
         print(datetime.now(),':[ERROR] with BeautifulSoup get response: ',e)
+        
+        
+async def get_result_data(content,url):
+    soup = BeautifulSoup(content, 'html.parser')
+    result_data = {}
+    div_rate = soup.find('div',class_='QSyom f e Q3 _Z')
+    reviews = soup.find('span', class_='GPKsO')
+    rating = soup.find('span', class_='biGQs _P fiohW uuBRH').text
+    name = soup.find('h1', class_='biGQs _P egaXP rRtyp').text
+    other_ratings = div_rate.find_all('svg', class_='UctUV d H0')
+    div_pos_rate = soup.find('div',class_='CsAqy u Ci Ph w')
+    div_emails = soup.find_all('div',class_='hpxwy e j')
+    email = None
+    for div in div_emails:
+        test_res = div.find('a')
+        if test_res.get('aria-label') == 'Email':
+            email = test_res.get('href').replace('mailto:','')
+    main_div = soup.find('div',class_='lJSal _T')
+    main_spans = main_div.find_all('span',class_='biGQs _P pZUbB hmDzD')
+    prices = main_spans[1]
+    pattern = r"g(\d+)-"
+        # Поиск совпадений в строке
+    matches = re.search(pattern, url)
+    g_code = None
+    if matches:
+        # Извлечение найденной части
+        g_code = matches.group(1)
+    
+    location_elements = soup.find_all('span',class_='ExtaW f Wh')
+    location_elements = [element.text for element in location_elements]
+    location = ','.join(location_elements)
+    number = soup.find_all('a', href=lambda href: href and 'tel' in href)
+    food_rating = service_rating = value_rating = atmosphere_rating = None
+    pos_in_rate = div_pos_rate.find('span', class_='biGQs _P pZUbB hmDzD')
+    city = pos_in_rate.text.split(' ')[-1] if len(pos_in_rate.text.split(' ')) > 2 else ''
+    if len(other_ratings[1:]) >= 1:
+        food_rating = other_ratings[1].text.split(' ') if other_ratings[1] else None
+    if len(other_ratings[1:]) >= 2:
+        service_rating = other_ratings[2].text.split(' ') if other_ratings[2] else None
+    if len(other_ratings[1:]) >= 3:
+        value_rating = other_ratings[3].text.split(' ') if other_ratings[3] else None
+    if len(other_ratings[1:]) >= 4:
+        atmosphere_rating = other_ratings[4].text.split(' ') if other_ratings[4] else None
+        
+    result_data['location'] = location.replace('\xa0','') if location else None
+    result_data['reviews'] = reviews.text.replace('\xa0','').split(' ')[0] if reviews else None
+    result_data['rating'] = rating if rating else None
+    result_data['name'] = name if name else None
+    result_data['email'] = email if email else None
+    result_data['pos_in_rate'] = pos_in_rate.text.replace('\xa0','').replace('\u202f','') if pos_in_rate else None
+    result_data['number'] = number[0].text if number else None
+    result_data['prices'] = prices.text if prices else None
+    result_data['food_rating'] = food_rating[0] if food_rating else None
+    result_data['service_rating'] = service_rating[0] if service_rating else None
+    result_data['value_rating'] = value_rating[0] if value_rating else None
+    result_data['g_code'] = g_code if g_code else None
+    result_data['atmosphere_rating'] = atmosphere_rating[0] if atmosphere_rating else None
+    result_data['city'] = city
+    result_data['link'] = url
+    
+    return result_data
