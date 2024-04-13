@@ -37,7 +37,8 @@ async def process_file(filename, semaphore, xml_index):
                     key_file_path, cert_file_path = await generate_ssl.generate_self_signed_certificate()
                     proxies = [
                     "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
-                    "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100"
+                    "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
+                    'http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100'
                     ]
                     proxy = random.choice(proxies)
                     content = await scrape_data.scrape_data(proxy=proxy,
