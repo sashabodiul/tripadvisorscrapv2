@@ -28,7 +28,7 @@ async def scrape_data(proxy, old_domain, new_domain, user_agent, url, key_file_p
         'user-agent': f"{user_agent}"
         }
 
-        async with aiohttp.ClientSession(trust_env=True) as session:
+        async with aiohttp.ClientSession(trust_env=False) as session:
             async with session.get(url=url, headers=headers, proxy=proxy, timeout=6) as response:
                 return await response.text()
     except Exception as e:
