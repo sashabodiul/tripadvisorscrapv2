@@ -7,7 +7,7 @@ import string
 
 async def scrape_data(proxy, old_domain, new_domain, user_agent, url, key_file_path, cert_file_path,interaction_count):
     try:
-        # url = url.replace(old_domain,new_domain)
+        url = url.replace(old_domain,new_domain)
         other_chunk_url = url.split('/')[-1]
         random_three_number = random.randint(100, 999)
         # Определяем символы, которые могут быть использованы для генерации строки

@@ -53,6 +53,7 @@ async def process_file(filename, semaphore, xml_index):
                     await write_log(str(e))
                 try:
                     result = await get_result_from_page.get_result_data(content, rest_url)
+                    rest_url = rest_url.replace(old_domain,new_domain)
                     if 'restaraunts_data' not in results_data:
                         results_data['restaraunts_data'] = []
                     try:
@@ -62,7 +63,7 @@ async def process_file(filename, semaphore, xml_index):
                                                             result['rating'],
                                                             result['name'],
                                                             result['email'],
-                                                            result['pos_in_rate'].replace('\xa0',''),
+                                                            result['pos_in_rate'].replace('\xa0','') if result['pos_in_rate'] else None,
                                                             result['number'],
                                                             result['prices'],
                                                             result['food_rating'],
