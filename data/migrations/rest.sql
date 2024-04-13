@@ -7,14 +7,15 @@ CREATE TABLE IF NOT EXISTS restaraunts (
     email VARCHAR(255),
     pos_in_rate VARCHAR(255),
     `number` VARCHAR(255),
-    prices VARCHAR(1000),
+    prices VARCHAR(255),
     food_rating VARCHAR(255),
     service_rating VARCHAR(255),
     value_rating VARCHAR(255),
     atmosphere_rating VARCHAR(255),
     g_code VARCHAR(255),
     city VARCHAR(255),
-    link VARCHAR(1000),
+    link VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_link (link)  -- Добавляем уникальный индекс к столбцу link
 );

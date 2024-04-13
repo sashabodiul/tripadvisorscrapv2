@@ -22,9 +22,9 @@ async def get_result_data(content,url):
     result_data = {}
     div_rate = soup.find('div',class_='QSyom f e Q3 _Z')
     reviews = soup.find('span', class_='GPKsO')
-    rating = soup.find('span', class_='biGQs _P fiohW uuBRH').text
-    name = soup.find('h1', class_='biGQs _P egaXP rRtyp').text
-    other_ratings = div_rate.find_all('svg', class_='UctUV d H0')
+    rating = soup.find('span', class_='biGQs _P fiohW uuBRH')
+    name = soup.find('h1', class_='biGQs _P egaXP rRtyp')
+    other_ratings = div_rate.find_all('svg', class_='UctUV d H0') if div_rate else None
     div_pos_rate = soup.find('div',class_='CsAqy u Ci Ph w')
     div_emails = soup.find_all('div',class_='hpxwy e j')
     email = None
@@ -33,8 +33,8 @@ async def get_result_data(content,url):
         if test_res.get('aria-label') == 'Email':
             email = test_res.get('href').replace('mailto:','')
     main_div = soup.find('div',class_='lJSal _T')
-    main_spans = main_div.find_all('span',class_='biGQs _P pZUbB hmDzD')
-    prices = main_spans[1]
+    main_spans = main_div.find_all('span',class_='biGQs _P pZUbB hmDzD') if main_div else None
+    prices = main_spans[1] if main_spans else None
     pattern = r"g(\d+)-"
         # Поиск совпадений в строке
     matches = re.search(pattern, url)
@@ -48,21 +48,25 @@ async def get_result_data(content,url):
     location = ','.join(location_elements)
     number = soup.find_all('a', href=lambda href: href and 'tel' in href)
     food_rating = service_rating = value_rating = atmosphere_rating = None
-    pos_in_rate = div_pos_rate.find('span', class_='biGQs _P pZUbB hmDzD')
-    city = pos_in_rate.text.split(' ')[-1] if len(pos_in_rate.text.split(' ')) > 2 else ''
-    if len(other_ratings[1:]) >= 1:
-        food_rating = other_ratings[1].text.split(' ') if other_ratings[1] else None
-    if len(other_ratings[1:]) >= 2:
-        service_rating = other_ratings[2].text.split(' ') if other_ratings[2] else None
-    if len(other_ratings[1:]) >= 3:
-        value_rating = other_ratings[3].text.split(' ') if other_ratings[3] else None
-    if len(other_ratings[1:]) >= 4:
-        atmosphere_rating = other_ratings[4].text.split(' ') if other_ratings[4] else None
+    pos_in_rate = div_pos_rate.find('span', class_='biGQs _P pZUbB hmDzD') if div_pos_rate else None
+    try:
+        city = pos_in_rate.text.split(' ')[-1] if len(pos_in_rate.text.split(' ')) > 2 else ''
+    except:
+        city = None
+    if other_ratings:
+        if len(other_ratings[1:]) >= 1:
+            food_rating = other_ratings[1].text.split(' ') if other_ratings[1] else None
+        if len(other_ratings[1:]) >= 2:
+            service_rating = other_ratings[2].text.split(' ') if other_ratings[2] else None
+        if len(other_ratings[1:]) >= 3:
+            value_rating = other_ratings[3].text.split(' ') if other_ratings[3] else None
+        if len(other_ratings[1:]) >= 4:
+            atmosphere_rating = other_ratings[4].text.split(' ') if other_ratings[4] else None
         
     result_data['location'] = location if location else None
     result_data['reviews'] = reviews.text.replace(' reviews','') if reviews else None
-    result_data['rating'] = rating if rating else None
-    result_data['name'] = name if name else None
+    result_data['rating'] = rating.text if rating else None
+    result_data['name'] = name.text if name else None
     result_data['email'] = email if email else None
     result_data['pos_in_rate'] = pos_in_rate.text if pos_in_rate else None
     result_data['number'] = number[0].text if number else None
@@ -208,7 +212,7 @@ async def scrape_data(proxy, old_domain, new_domain, user_agent, url):
                 'sec-fetch-user': '?1',
                 'sec-gpc': '1',
                 'upgrade-insecure-requests': '1',
-                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
+                'user-agent': f'{user_agent}'
                 }
 
         # Где-то в вашем коде генерируется ключ и сертификат
@@ -222,7 +226,7 @@ async def scrape_data(proxy, old_domain, new_domain, user_agent, url):
         connector = TCPConnector(ssl=ssl_context)
 
         async with aiohttp.ClientSession(connector=connector, headers=headers) as session:
-            async with session.get(url) as response:
+            async with session.get(url=url,timeout=5) as response:
                 if response.content_type == 'application/octet-stream' and response.headers.get('content-encoding') == 'br':
                     # Decode Brotli content
                     content = await response.read()

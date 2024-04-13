@@ -1,4 +1,14 @@
 from datetime import datetime
+import asyncio
+import aiofiles
+
+async def write_log(log_message):
+    log_filename = 'data/logs/logfile.log'
+    async with asyncio.Lock():
+        async with aiofiles.open(log_filename, mode='a') as logfile:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            log_entry = f"[{timestamp}] {log_message}\n"
+            await logfile.write(log_entry)
 
 async def insert_into_restaurants(connection, restaurants_data):
     try:
@@ -32,8 +42,8 @@ async def insert_into_restaurants(connection, restaurants_data):
                 """
                 await cursor.executemany(insert_sql, unique_restaurants_data_no_duplicates)
                 
-            print(f"\r\033[K{datetime.now()} :[INFO DB] Restaurants unique pool: {len(unique_restaurants_data_no_duplicates)} update pool: {len(restaurants_data)-len(unique_restaurants_data_no_duplicates)}", end="", flush=True)
+            await write_log(f"[INFO DB] Restaurants unique pool: {len(unique_restaurants_data_no_duplicates)} update pool: {len(restaurants_data)-len(unique_restaurants_data_no_duplicates)}")
 
             await connection.commit()  # Commit only after all data has been added
     except Exception as e:
-        print(datetime.now(),':[ERROR] inserting/restaurants: ', e)
+        await write_log(f":[ERROR] inserting/restaurants: {e}")

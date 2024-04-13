@@ -1,6 +1,8 @@
 from datetime import datetime
 from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup
+import asyncio
+import aiofiles
 
 async def check_true_page(content, url):
     try:
@@ -14,4 +16,10 @@ async def check_true_page(content, url):
             return True
         return False
     except Exception as e:
-        print(f"{datetime.now()} :[ERROR] Cannot check real restaraunt",url,e)
+        log_filename = 'data/logs/logfile.log'
+        log_message = (f"[ERROR] Cannot check real restaraunt{url} with {e}")
+        async with asyncio.Lock():
+            async with aiofiles.open(log_filename, mode='a') as logfile:
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                log_entry = f"[{timestamp}] {log_message}\n"
+                await logfile.write(log_entry)

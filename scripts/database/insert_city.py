@@ -1,4 +1,14 @@
 from datetime import datetime
+import asyncio
+import aiofiles
+
+async def write_log(log_message):
+    log_filename = 'data/logs/logfile.log'
+    async with asyncio.Lock():
+        async with aiofiles.open(log_filename, mode='a') as logfile:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            log_entry = f"[{timestamp}] {log_message}\n"
+            await logfile.write(log_entry)
 
 async def insert_into_city(connection, city_data):
     try:
@@ -11,7 +21,7 @@ async def insert_into_city(connection, city_data):
                 existing_link = await cursor.fetchone()
                 if not existing_link:  # Если нет совпадений, то добавляем данные в список для вставки
                     insert_values.append((G_id, location, link))
-            print(f"\r\033[K{datetime.now()} :[INFO DB] City Unique pool {len(insert_values)}", end="", flush=True)
+            await write_log(f"[INFO DB] City Unique pool {len(insert_values)}")
             if insert_values:  # Проверяем, есть ли данные для вставки
                 insert_sql = """
                     INSERT INTO city (G_id, location, link) 
@@ -20,4 +30,4 @@ async def insert_into_city(connection, city_data):
                 await cursor.executemany(insert_sql, insert_values)  # Выполняем вставку данных с помощью executemany
             await connection.commit()
     except Exception as e:
-        print(datetime.now(),':[ERROR] inserting/city: ', e)
+        await write_log(f"[ERROR] inserting/city: {e}")
