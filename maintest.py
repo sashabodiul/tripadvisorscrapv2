@@ -1,4 +1,4 @@
-from scripts.tests import test_getdata, test_env, test_connection, test_pyppeteer
+from scripts.tests import test_getdata, test_env, test_connection
 import asyncio
 
 asyncio.run(test_getdata.main())
