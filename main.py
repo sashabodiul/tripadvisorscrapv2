@@ -53,33 +53,58 @@ async def process_file(filename, semaphore, xml_index):
                     await write_log(str(e))
                 try:
                     result = await get_result_from_page.get_result_data(content, rest_url)
+                    if result['rating'] is None:
+                        another_result = await get_result_from_page.get_all_data_from_restaurants(content,rest_url)
+                        if another_result['rating'] is not None:
+                            result['location']=another_result['location']
+                            result['reviews']=another_result['reviews_count']
+                            result['rating']=another_result['rating']
+                            result['name']=another_result['location'].split(',')[0]
+                            result['email']=another_result['email']
+                            result['pos_in_rate']=list(another_result['position_in_rating'])[0]
+                            result['number']=another_result['telephone']
+                            result['prices']=another_result['prices']
+                            result['food_rating']=another_result['food_rating']
+                            result['service_rating']=another_result['service_rating']
+                            result['value_rating']=another_result['value_rating']
+                            result['atmosphere_rating']=another_result['atmosphere_rating']
+                            result['g_code']=another_result['g_code']
+                            result['city']=" ".join(list(another_result['position_in_rating'])[0].split(' ')[-2:])
+                            result['link']=another_result['website_link']
                     rest_url = rest_url.replace(old_domain,new_domain)
                     if 'restaraunts_data' not in results_data:
                         results_data['restaraunts_data'] = []
                     try:
-                        results_data['restaraunts_data'].append((
-                                                            result['location'],
-                                                            result['reviews'],
-                                                            result['rating'],
-                                                            result['name'],
-                                                            result['email'],
-                                                            result['pos_in_rate'].replace('\xa0','') if result['pos_in_rate'] else None,
-                                                            result['number'],
-                                                            result['prices'],
-                                                            result['food_rating'],
-                                                            result['service_rating'],
-                                                            result['value_rating'],
-                                                            result['atmosphere_rating'],
-                                                            result['g_code'],
-                                                            result['city'],
-                                                            result['link']))
-                        substring_before_g_code = result['link'].split(result['g_code'])[0]
+                        if result['name'] is not None:
+                            results_data['restaraunts_data'].append((
+                                                                result['location'],
+                                                                result['reviews'],
+                                                                result['rating'],
+                                                                result['name'],
+                                                                result['email'],
+                                                                result['pos_in_rate'].replace('\xa0','') if result['pos_in_rate'] else None,
+                                                                result['number'],
+                                                                result['prices'],
+                                                                result['food_rating'],
+                                                                result['service_rating'],
+                                                                result['value_rating'],
+                                                                result['atmosphere_rating'],
+                                                                result['g_code'],
+                                                                result['city'],
+                                                                result['link']))
+                            substring_before_g_code = result['link'].split(result['g_code'])[0]
 
-                        # Replace 'Restaurant_Review' with 'Tourism' in the extracted substring
-                        city_link = substring_before_g_code.replace('Restaurant_Review', 'Tourism')
-                        city_code = result['g_code']
-                        results_data['city_data'].append((city_code,result['location'],city_link))
-                        print(f"\r\033[K{datetime.now()} - i: {link_index+len(results_data['restaraunts_data'])}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
+                            # Replace 'Restaurant_Review' with 'Tourism' in the extracted substring
+                            city_link = substring_before_g_code.replace('Restaurant_Review', 'Tourism')
+                            city_code = result['g_code']
+                            results_data['city_data'].append((city_code,result['location'],city_link))
+                            print(f"\r\033[K{datetime.now()} - i: {link_index+len(results_data['restaraunts_data'])}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
+                        else:
+                            await write_log(f'[DEBUG] Cannot get info from: {rest_url}')
+                            await asyncio.sleep(10)
+                            if link_index >= start_index:
+                                link_index -=1
+                                continue
                     except Exception as e:
                         await write_log(f'[ERROR] Cannot add data to list, try again {e} URL: {rest_url}')
                     
@@ -88,7 +113,8 @@ async def process_file(filename, semaphore, xml_index):
                     if result['name'] is not None or result['location'] is not None:
                         real = await check_real.check_true_page(content, rest_url)
                         if real:
-                            link_index-=1
+                            if link_index >= start_index:
+                                link_index -=1
                             continue
                         else:
                             link_index+=1
