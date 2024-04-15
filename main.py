@@ -38,7 +38,12 @@ async def process_file(filename, semaphore, xml_index):
                     proxies = [
                     "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
                     "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
-                    'http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100'
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.78.27:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.69.204:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.79.234:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100"
                     ]
                     proxy = random.choice(proxies)
                     content = await scrape_data.scrape_data(proxy=proxy,
