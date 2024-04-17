@@ -54,8 +54,12 @@ async def process_file(filename, semaphore, xml_index):
                                                             key_file_path=key_file_path,
                                                             cert_file_path=cert_file_path,
                                                             interaction_count=link_index)
+                    print(content['status_code'])
+                    if content['status_code'] != 200 and len(proxies) > 0:
+                        proxies.remove(proxy)
+                        continue
                 except Exception as e:
-                    await write_log(str(e))
+                    await write_log(f"{rest_url} Connection refused {e}")
                 try:
                     result = await get_result_from_page.get_result_data(content, rest_url)
                     if result['rating'] is None:
