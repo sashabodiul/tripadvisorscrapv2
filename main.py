@@ -58,7 +58,8 @@ async def process_file(filename, semaphore, xml_index):
                         proxies.remove(proxy)
                         continue
                     elif len(proxies) == 0:
-                        asyncio.sleep(60*60*60)
+                        print(f"[DEBUG] {datetime.now()} proxy reloading... 1 minutes ago")
+                        asyncio.sleep(60*60)
                         proxies = [
                         "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
                         "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
@@ -122,7 +123,6 @@ async def process_file(filename, semaphore, xml_index):
                             print(f"\r\033[K{datetime.now()} - i: {link_index+len(results_data['restaraunts_data'])}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
                         else:
                             await write_log(f'[DEBUG] Cannot get info from: {rest_url}')
-                            await asyncio.sleep(10)
                             if link_index >= start_index:
                                 link_index -=1
                                 continue
