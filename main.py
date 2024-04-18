@@ -108,7 +108,6 @@ async def process_file(filename, semaphore, xml_index):
                             results_data['restaraunts_data'] = []
                         try:
                             if result['name'] is not None:
-                                print(result)
                                 results_data['restaraunts_data'].append((
                                                                     result['location'],
                                                                     result['reviews'],
@@ -134,7 +133,7 @@ async def process_file(filename, semaphore, xml_index):
                                 logger.success(f"i: {link_index+len(results_data['restaraunts_data'])}, xml: {xml_index+1} rest: {result['name']}")
                             else:
                                 logger.debug(f'[DEBUG] Cannot get info from: {rest_url}')
-                                if link_index >= start_index:
+                                if link_index > start_index:
                                     link_index -=1
                                     continue
                         except Exception as e:
