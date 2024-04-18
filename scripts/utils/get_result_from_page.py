@@ -190,7 +190,7 @@ async def get_result_data(content,url):
         result_data['g_code'] = g_code if g_code else None
         result_data['atmosphere_rating'] = atmosphere_rating[0] if atmosphere_rating else None
         result_data['city'] = city if city else None
-        result_data['link'] = url if url else None
+        result_data['link'] = url
         
         return result_data
     except Exception as e:

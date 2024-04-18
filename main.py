@@ -7,6 +7,9 @@ from datetime import datetime
 import aiomysql
 import asyncio
 import aiofiles
+from loguru import logger
+
+
 
 async def write_log(log_message):
     log_filename = 'data/logs/logfile.log'
@@ -20,6 +23,16 @@ results_data = {'restaraunts_data': [], 'city_data': []}
 rand_number = 0
 
 async def process_file(filename, semaphore, xml_index):
+    proxies = [
+                    "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.78.27:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.69.204:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.79.234:50100",
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100"
+                    ]
     async with semaphore:
         batch_counter = await batch.load_batch_counter()
         block_batch = batch_counter % 50000
@@ -35,102 +48,100 @@ async def process_file(filename, semaphore, xml_index):
                 try:
                     # Где-то в вашем коде генерируется ключ и сертификат
                     key_file_path, cert_file_path = await generate_ssl.generate_self_signed_certificate()
-                    proxies = [
-                    "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
-                    "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
-                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100",
-                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.78.27:50100",
-                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
-                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.69.204:50100",
-                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.79.234:50100",
-                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100"
-                    ]
-                    proxy = random.choice(proxies)
-                    content = await scrape_data.scrape_data(proxy=proxy,
-                                                            old_domain=str(old_domain),
-                                                            new_domain=str(new_domain),
-                                                            user_agent=str(user_agent),
-                                                            url=str(rest_url),
-                                                            key_file_path=key_file_path,
-                                                            cert_file_path=cert_file_path,
-                                                            interaction_count=link_index)
-                    if content['status_code'] != 200 and len(proxies) > 0:
-                        proxies.remove(proxy)
-                        continue
-                    elif len(proxies) == 0:
-                        print(f"[DEBUG] {datetime.now()} proxy reloading... 1 minutes ago")
-                        asyncio.sleep(60*60)
-                        proxies = [
-                        "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
-                        "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
-                        "http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100",
-                        "http://instacombine06ZaJ:NpU7hKC8hj@91.124.78.27:50100",
-                        "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
-                        "http://instacombine06ZaJ:NpU7hKC8hj@91.124.69.204:50100",
-                        "http://instacombine06ZaJ:NpU7hKC8hj@91.124.79.234:50100",
-                        "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100"
-                        ]
-                        continue
-                except Exception as e:
-                    await write_log(f"{rest_url} Connection refused {e}")
-                try:
-                    result = await get_result_from_page.get_result_data(content, rest_url)
-                    if result['rating'] is None:
-                        another_result = await get_result_from_page.get_all_data_from_restaurants(content,rest_url)
-                        if another_result['rating'] is not None:
-                            result['location']=another_result['location']
-                            result['reviews']=another_result['reviews_count']
-                            result['rating']=another_result['rating']
-                            result['name']=another_result['location'].split(',')[0]
-                            result['email']=another_result['email']
-                            result['pos_in_rate']=list(another_result['position_in_rating'])[0]
-                            result['number']=another_result['telephone']
-                            result['prices']=another_result['prices']
-                            result['food_rating']=another_result['food_rating']
-                            result['service_rating']=another_result['service_rating']
-                            result['value_rating']=another_result['value_rating']
-                            result['atmosphere_rating']=another_result['atmosphere_rating']
-                            result['g_code']=another_result['g_code']
-                            result['city']=" ".join(list(another_result['position_in_rating'])[0].split(' ')[-2:])
-                            result['link']=another_result['website_link']
-                    rest_url = rest_url.replace(old_domain,new_domain)
-                    if 'restaraunts_data' not in results_data:
-                        results_data['restaraunts_data'] = []
-                    try:
-                        if result['name'] is not None:
-                            results_data['restaraunts_data'].append((
-                                                                result['location'],
-                                                                result['reviews'],
-                                                                result['rating'],
-                                                                result['name'],
-                                                                result['email'],
-                                                                result['pos_in_rate'].replace('\xa0','') if result['pos_in_rate'] else None,
-                                                                result['number'],
-                                                                result['prices'],
-                                                                result['food_rating'],
-                                                                result['service_rating'],
-                                                                result['value_rating'],
-                                                                result['atmosphere_rating'],
-                                                                result['g_code'],
-                                                                result['city'],
-                                                                result['link'].replace(new_domain,old_domain)))
-                            substring_before_g_code = result['link'].split(result['g_code'])[0]
-
-                            # Replace 'Restaurant_Review' with 'Tourism' in the extracted substring
-                            city_link = substring_before_g_code.replace('Restaurant_Review', 'Tourism')
-                            city_code = result['g_code']
-                            results_data['city_data'].append((city_code,result['location'],city_link))
-                            print(f"\r\033[K{datetime.now()} - i: {link_index+len(results_data['restaraunts_data'])}, xml: {xml_index+1} rest: {result['name']}", end="", flush=True)
-                        else:
-                            await write_log(f'[DEBUG] Cannot get info from: {rest_url}')
-                            if link_index >= start_index:
-                                link_index -=1
-                                continue
-                    except Exception as e:
-                        await write_log(f'[ERROR] Cannot add data to list, try again {e} URL: {rest_url}')
                     
+                    if len(proxies) > 0:
+                        proxy = random.choice(proxies)
+                        content = await scrape_data.scrape_data(proxy=proxy,
+                                                                old_domain=str(old_domain),
+                                                                new_domain=str(new_domain),
+                                                                user_agent=str(user_agent),
+                                                                url=str(rest_url),
+                                                                key_file_path=key_file_path,
+                                                                cert_file_path=cert_file_path,
+                                                                interaction_count=link_index)
+                        # if "Please enable JS and disable any ad blocker" in content and len(proxies) > 0:
+                        #     if proxy in proxies:
+                        #         proxies.remove(proxy)
+                        #         logger.info(f"Reloaded proxy {proxy}")
+                            
+                        #     continue
+                        # elif len(proxies) == 0:
+                        #     logger.debug(f"proxy reloading... 15 seconds")
+                        #     proxies.extend(
+                        #     "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
+                        #     "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
+                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100",
+                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.78.27:50100",
+                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
+                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.69.204:50100",
+                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.79.234:50100",
+                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100"
+                        #     )
+                        #     continue
                 except Exception as e:
-                    await write_log(str(e))
+                    logger.error(f"{rest_url} Connection refused {e}")
+                try:
+                    if "Please enable JS and disable any ad blocker" not in content and content:
+                        result = await get_result_from_page.get_result_data(content, rest_url)
+                        if result['name'] is None:
+                            if link_index > start_index:
+                                link_index -= 1
+                            another_result = await get_result_from_page.get_all_data_from_restaurants(content,rest_url)
+                            if another_result['rating'] is not None:
+                                result['location']=another_result['location']
+                                result['reviews']=another_result['reviews_count']
+                                result['rating']=another_result['rating']
+                                result['name']=another_result['location'].split(',')[0] if another_result['location'] else None
+                                result['email']=another_result['email']
+                                result['pos_in_rate']=list(another_result['position_in_rating'])[0].replace('\xa0','') if len(list(another_result['position_in_rating'])) > 0 else None
+                                result['number']=another_result['telephone']
+                                result['prices']=another_result['prices']
+                                result['food_rating']=another_result['food_rating']
+                                result['service_rating']=another_result['service_rating']
+                                result['value_rating']=another_result['value_rating']
+                                result['atmosphere_rating']=another_result['atmosphere_rating']
+                                result['g_code']=another_result['g_code']
+                                result['city']=" ".join(list(another_result['position_in_rating'])[0].split(' ')[-2:]) if len(list(another_result['position_in_rating'])) > 0 else None
+                                result['link']=another_result['website_link']
+                        rest_url = rest_url.replace(old_domain,new_domain)
+                        if 'restaraunts_data' not in results_data:
+                            results_data['restaraunts_data'] = []
+                        try:
+                            if result['name'] is not None:
+                                print(result)
+                                results_data['restaraunts_data'].append((
+                                                                    result['location'],
+                                                                    result['reviews'],
+                                                                    result['rating'],
+                                                                    result['name'],
+                                                                    result['email'],
+                                                                    result['pos_in_rate'].replace('\xa0','') if result['pos_in_rate'] and '\xa0' in result['pos_in_rate'] else result['pos_in_rate'],
+                                                                    result['number'],
+                                                                    result['prices'],
+                                                                    result['food_rating'],
+                                                                    result['service_rating'],
+                                                                    result['value_rating'],
+                                                                    result['atmosphere_rating'],
+                                                                    result['g_code'],
+                                                                    result['city'],
+                                                                    result['link'].replace(new_domain,old_domain)))
+                                substring_before_g_code = result['link'].split(result['g_code'])[0]
+
+                                # Replace 'Restaurant_Review' with 'Tourism' in the extracted substring
+                                city_link = substring_before_g_code.replace('Restaurant_Review', 'Tourism')
+                                city_code = result['g_code']
+                                results_data['city_data'].append((city_code,result['location'],city_link))
+                                logger.success(f"i: {link_index+len(results_data['restaraunts_data'])}, xml: {xml_index+1} rest: {result['name']}")
+                            else:
+                                logger.debug(f'[DEBUG] Cannot get info from: {rest_url}')
+                                if link_index >= start_index:
+                                    link_index -=1
+                                    continue
+                        except Exception as e:
+                            logger.error(f'[ERROR] Cannot add data to list, try again {e} URL: {rest_url}')
+                
+                except Exception as e:
+                    logger.error(f"Invalid data from rest {e}")
                     if result['name'] is not None or result['location'] is not None:
                         real = await check_real.check_true_page(content, rest_url)
                         if real:
@@ -147,7 +158,7 @@ async def process_file(filename, semaphore, xml_index):
                     await batch.save_batch_counter(batch_counter)
                     async with aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASS, db=DB_NAME) as pool:
                         async with pool.acquire() as connection:
-                            await write_log(f"[INFO] starting create pool and connecting to database")
+                            logger.info(f"starting create pool and connecting to database")
                             await insert_rest.insert_into_restaurants(connection, results_data['restaraunts_data'])
                             await insert_city.insert_into_city(connection, results_data['city_data'])
                         await connection.commit()
@@ -168,7 +179,7 @@ async def main():
         # Проверяем результаты выполнения задач
         for result in done:
             if isinstance(result, Exception):
-                await write_log(f"Ошибка при выполнении задачи: {result}")
+                logger.warning(f"Ошибка при выполнении задачи: {result}")
 
         if not tasks:  # Если список задач пуст, то выходим из цикла
             break

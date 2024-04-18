@@ -349,7 +349,7 @@ async def main():
     old_domain = MAIN_DOMAIN.strip()
     new_domain = random.choice(DOMAINS_LIST).strip()
     user_agent = random.choice(USER_AGENTS_LIST).strip()
-    rest_url = "https://en.tripadvisor.com.hk/Restaurant_Review-g54273-d497884-Reviews-Hudson_s_Seafood_House_on_the_Docks-Hilton_Head_South_Carolina.html"
+    rest_url = "https://www.tripadvisor.com/Restaurant_Review-g294454-d2658903-Reviews-Pane_e_Olio-Zagreb_Central_Croatia.html"
     proxies = [
     "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
     "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
