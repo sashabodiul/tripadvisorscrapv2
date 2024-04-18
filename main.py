@@ -112,7 +112,7 @@ async def process_file(filename, semaphore, xml_index):
                                                                 result['atmosphere_rating'],
                                                                 result['g_code'],
                                                                 result['city'],
-                                                                result['link']))
+                                                                result['link'].replace(new_domain,old_domain)))
                             substring_before_g_code = result['link'].split(result['g_code'])[0]
 
                             # Replace 'Restaurant_Review' with 'Tourism' in the extracted substring
