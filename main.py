@@ -10,22 +10,11 @@ import aiofiles
 from loguru import logger
 
 
-
-async def write_log(log_message):
-    log_filename = 'data/logs/logfile.log'
-    async with asyncio.Lock():
-        async with aiofiles.open(log_filename, mode='a') as logfile:
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            log_entry = f"[{timestamp}] {log_message}\n"
-            await logfile.write(log_entry)
-
 results_data = {'restaraunts_data': [], 'city_data': []}
 rand_number = 0
 
 async def process_file(filename, semaphore, xml_index):
     proxies = [
-                    "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
-                    "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
                     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100",
                     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.78.27:50100",
                     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
@@ -59,25 +48,6 @@ async def process_file(filename, semaphore, xml_index):
                                                                 key_file_path=key_file_path,
                                                                 cert_file_path=cert_file_path,
                                                                 interaction_count=link_index)
-                        # if "Please enable JS and disable any ad blocker" in content and len(proxies) > 0:
-                        #     if proxy in proxies:
-                        #         proxies.remove(proxy)
-                        #         logger.info(f"Reloaded proxy {proxy}")
-                            
-                        #     continue
-                        # elif len(proxies) == 0:
-                        #     logger.debug(f"proxy reloading... 15 seconds")
-                        #     proxies.extend(
-                        #     "http://sashabodiul07:7UMNo7iRr6@161.77.75.248:50100",
-                        #     "http://sashabodiul07:7UMNo7iRr6@168.158.37.211:50100",
-                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.71.230:50100",
-                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.78.27:50100",
-                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
-                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.69.204:50100",
-                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.79.234:50100",
-                        #     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100"
-                        #     )
-                        #     continue
                 except Exception as e:
                     logger.error(f"{rest_url} Connection refused {e}")
                 try:
@@ -101,7 +71,7 @@ async def process_file(filename, semaphore, xml_index):
                                 result['value_rating']=another_result['value_rating']
                                 result['atmosphere_rating']=another_result['atmosphere_rating']
                                 result['g_code']=another_result['g_code']
-                                result['city']=" ".join(list(another_result['position_in_rating'])[0].split(' ')[-2:]) if len(list(another_result['position_in_rating'])) > 0 else None
+                                result['city']=" ".join(list(another_result['position_in_rating'])[0].split(' ')[-2:]) if len(list(another_result['position_in_rating'])) > 0 and another_result['position_in_rating'] != 'NULL' or None else None
                                 result['link']=another_result['website_link']
                         rest_url = rest_url.replace(old_domain,new_domain)
                         if 'restaraunts_data' not in results_data:
@@ -140,7 +110,7 @@ async def process_file(filename, semaphore, xml_index):
                             logger.error(f'[ERROR] Cannot add data to list, try again {e} URL: {rest_url}')
                 
                 except Exception as e:
-                    logger.error(f"Invalid data from rest {e}")
+                    # logger.error(f"Invalid data from rest: {rest_url} {e}")
                     if result['name'] is not None or result['location'] is not None:
                         real = await check_real.check_true_page(content, rest_url)
                         if real:
