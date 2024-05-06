@@ -3,12 +3,10 @@ from scripts.utils import emulation_scrape, scrape_data,batch,get_result_from_pa
 from scripts.database import insert_city,insert_rest
 import random
 from data.config import *
-from datetime import datetime
 import aiomysql
 import asyncio
-import aiofiles
 from loguru import logger
-
+from datetime import datetime
 
 results_data = {'restaraunts_data': [], 'city_data': []}
 rand_number = 0
@@ -28,7 +26,7 @@ async def process_file(filename, semaphore, xml_index):
         list_rest = await read_data_from_file.read_lines_from_file(filename=filename)
         for start_index in range(block_batch, len(list_rest), BATCH_COUNT):
             end_index = start_index + BATCH_COUNT
-
+            previous_length = 0 
             for link_index in range(start_index, end_index):
                 old_domain = MAIN_DOMAIN.strip()
                 new_domain = random.choice(DOMAINS_LIST).strip()
@@ -100,7 +98,8 @@ async def process_file(filename, semaphore, xml_index):
                                 city_link = substring_before_g_code.replace('Restaurant_Review', 'Tourism')
                                 city_code = result['g_code']
                                 results_data['city_data'].append((city_code,result['location'],city_link))
-                                logger.success(f"i: {link_index+len(results_data['restaraunts_data'])}, xml: {xml_index+1} rest: {result['name']}")
+                                # Использование logger с символом возврата каретки для перезаписи
+                                print(f"\rSUCCESS {datetime.now()} i: {link_index+len(results_data['restaraunts_data'])} xml: {xml_index+1} rest: {result['name']}", end='', flush=True)
                             else:
                                 logger.debug(f'[DEBUG] Cannot get info from: {rest_url}')
                                 if link_index > start_index:
