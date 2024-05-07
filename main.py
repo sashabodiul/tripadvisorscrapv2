@@ -18,7 +18,17 @@ async def process_file(filename, semaphore, xml_index):
                     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.76.167:50100",
                     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.69.204:50100",
                     "http://instacombine06ZaJ:NpU7hKC8hj@91.124.79.234:50100",
-                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100"
+                    "http://instacombine06ZaJ:NpU7hKC8hj@91.124.72.43:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.69.153:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.73.67:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.78.223:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.70.151:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.77.65:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.68.11:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.75.198:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.79.88:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.71.196:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.76.174:50100"
                     ]
     async with semaphore:
         batch_counter = await batch.load_batch_counter()
