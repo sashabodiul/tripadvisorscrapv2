@@ -28,7 +28,8 @@ async def process_file(filename, semaphore, xml_index):
                     "http://sashabodiul07:7UMNo7iRr6@91.124.75.198:50100",
                     "http://sashabodiul07:7UMNo7iRr6@91.124.79.88:50100",
                     "http://sashabodiul07:7UMNo7iRr6@91.124.71.196:50100",
-                    "http://sashabodiul07:7UMNo7iRr6@91.124.76.174:50100"
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.76.174:50100",
+                    "http://sashabodiul07:7UMNo7iRr6@91.124.70.77:50100",
                     ]
     async with semaphore:
         batch_counter = await batch.load_batch_counter()
@@ -64,24 +65,41 @@ async def process_file(filename, semaphore, xml_index):
                         if result['name'] is None:
                             if link_index > start_index:
                                 link_index -= 1
-                            another_result = await get_result_from_page.get_all_data_from_restaurants(content,rest_url)
-                            if another_result['rating'] is not None:
-                                result['location']=another_result['location']
-                                result['reviews']=another_result['reviews_count']
-                                result['rating']=another_result['rating']
-                                result['name']=another_result['location'].split(',')[0] if another_result['location'] else None
-                                result['email']=another_result['email']
-                                result['pos_in_rate']=list(another_result['position_in_rating'])[0].replace('\xa0','') if len(list(another_result['position_in_rating'])) > 0 else None
-                                result['number']=another_result['telephone']
-                                result['prices']=another_result['prices']
-                                result['food_rating']=another_result['food_rating']
-                                result['service_rating']=another_result['service_rating']
-                                result['value_rating']=another_result['value_rating']
-                                result['atmosphere_rating']=another_result['atmosphere_rating']
-                                result['g_code']=another_result['g_code']
-                                result['city']=" ".join(list(another_result['position_in_rating'])[0].split(' ')[-2:]) if len(list(another_result['position_in_rating'])) > 0 and another_result['position_in_rating'] != 'NULL' or None else None
-                                result['link']=another_result['website_link']
-                        rest_url = rest_url.replace(old_domain,new_domain)
+                            results_data['restaraunts_data'].append((
+                                                                result['location'],
+                                                                result['reviews'],
+                                                                result['rating'],
+                                                                result['name'],
+                                                                result['email'],
+                                                                result['pos_in_rate'].replace('\xa0','') if result['pos_in_rate'] and '\xa0' in result['pos_in_rate'] else result['pos_in_rate'],
+                                                                result['number'],
+                                                                result['prices'],
+                                                                result['food_rating'],
+                                                                result['service_rating'],
+                                                                result['value_rating'],
+                                                                result['atmosphere_rating'],
+                                                                result['g_code'],
+                                                                result['city'],
+                                                                result['link'].replace(new_domain,old_domain) if result['link'] else None
+                                                                ))
+                        #     another_result = await get_result_from_page.get_all_data_from_restaurants(content,rest_url)
+                        #     if another_result['rating'] is not None:
+                        #         result['location']=another_result['location']
+                        #         result['reviews']=another_result['reviews_count']
+                        #         result['rating']=another_result['rating']
+                        #         result['name']=another_result['location'].split(',')[0] if another_result['location'] else None
+                        #         result['email']=another_result['email']
+                        #         result['pos_in_rate']=list(another_result['position_in_rating'])[0].replace('\xa0','') if len(list(another_result['position_in_rating'])) > 0 else None
+                        #         result['number']=another_result['telephone']
+                        #         result['prices']=another_result['prices']
+                        #         result['food_rating']=another_result['food_rating']
+                        #         result['service_rating']=another_result['service_rating']
+                        #         result['value_rating']=another_result['value_rating']
+                        #         result['atmosphere_rating']=another_result['atmosphere_rating']
+                        #         result['g_code']=another_result['g_code']
+                        #         result['city']=" ".join(list(another_result['position_in_rating'])[0].split(' ')[-2:]) if len(list(another_result['position_in_rating'])) > 0 and another_result['position_in_rating'] != 'NULL' or None else None
+                        #         result['link']=another_result['website_link']
+                        # rest_url = rest_url.replace(old_domain,new_domain)
                         if 'restaraunts_data' not in results_data:
                             results_data['restaraunts_data'] = []
                         try:
