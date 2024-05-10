@@ -37,7 +37,6 @@ async def process_file(filename, semaphore, xml_index):
         list_rest = await read_data_from_file.read_lines_from_file(filename=filename)
         for start_index in range(block_batch, len(list_rest), BATCH_COUNT):
             end_index = start_index + BATCH_COUNT
-            previous_length = 0 
             for link_index in range(start_index, end_index):
                 old_domain = MAIN_DOMAIN.strip()
                 new_domain = random.choice(DOMAINS_LIST).strip()
@@ -62,9 +61,9 @@ async def process_file(filename, semaphore, xml_index):
                 try:
                     if "Please enable JS and disable any ad blocker" not in content and content:
                         result = await get_result_from_page.get_result_data(content, rest_url)
-                        if result['name'] is None:
-                            if link_index > start_index:
-                                link_index -= 1
+                        # if result['name'] is None:
+                        #     if link_index > start_index:
+                        #         link_index -= 1
                         #     results_data['restaraunts_data'].append((
                         #                                         result['location'],
                         #                                         result['reviews'],
@@ -133,7 +132,7 @@ async def process_file(filename, semaphore, xml_index):
                                 # Использование logger с символом возврата каретки для перезаписи
                                 print(f"\rSUCCESS {datetime.now()} i: {link_index+len(results_data['restaraunts_data'])} xml: {xml_index+1} rest: {result['name']}", end='', flush=True)
                             else:
-                                logger.debug(f'[DEBUG] Cannot get info from: {rest_url}')
+                                logger.debug(f'[DEBUG] Cannot get info from: {rest_url.replace(old_domain,new_domain)}')
                                 if link_index > start_index:
                                     link_index -=1
                                     continue
