@@ -225,7 +225,7 @@ async def converter_data(link: str, header: dict, payload: dict, proxy: str):
         results_data["restaraunts_data"] = []
         results_data["city_data"] = []
     if clear_data["location"] is None and clear_data["name"] is None and clear_data["pos_in_rate"] is None:
-        asyncio.sleep(60*60*4)
+        await asyncio.sleep(60*60*4)
         return None
     else:
         results_data['restaraunts_data'].append((
