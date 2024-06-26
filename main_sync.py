@@ -298,9 +298,8 @@ async def main():
         batch_counter = await load_batch_counter()
         block_batch = batch_counter % 50000
         data_from_file = read_lines_from_file(file)
-        for link in data_from_file[block_batch:]:
-            random_number4 = random.randint(1000,9999)
-            proxy_dict = {
+        random_number4 = random.randint(1000,9999)
+        proxy_dict = {
                 "http://sashabodiul07:7UMNo7iRr6@91.124.86.145:50100":{
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8',
@@ -442,6 +441,8 @@ async def main():
   'Priority': 'u=0, i'
 },
             }
+        for link in data_from_file[block_batch:]:
+            
             await process_link(link, proxy_dict, payload)
     
 if __name__ == '__main__':
