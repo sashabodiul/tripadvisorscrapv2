@@ -16,6 +16,35 @@ DB_NAME="a7makeup_parsing"
 results_data = {'restaraunts_data': [], 'city_data': []}
 
 
+async def save_batch_counter(batch_counter):
+
+    try:
+        with open(f'batch_counter.txt', 'w') as f:
+            f.write(str(batch_counter))
+    except Exception as e:
+        log_filename = 'data/logs/logfile.log'
+        log_message = (f"[ERROR] in saving index: {e}")
+        async with asyncio.Lock():
+            async with aiofiles.open(log_filename, mode='a') as logfile:
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                log_entry = f"[{timestamp}] {log_message}\n"
+                await logfile.write(log_entry)
+
+async def load_batch_counter():
+    try:
+        if os.path.exists(f'batch_counter.txt'):
+            with open(f'batch_counter.txt', 'r') as f:
+                return int(f.read())
+        return None
+    except Exception as e:
+        log_filename = 'data/logs/logfile.log'
+        log_message = (f"[ERROR] in loading index: {e}")
+        async with asyncio.Lock():
+            async with aiofiles.open(log_filename, mode='a') as logfile:
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                log_entry = f"[{timestamp}] {log_message}\n"
+                await logfile.write(log_entry)
+
 async def write_log(log_message):
     log_filename = 'data/logs/logfile.log'
     async with asyncio.Lock():
@@ -83,7 +112,6 @@ async def insert_into_city(connection, city_data):
             await connection.commit()
     except Exception as e:
         await write_log(f"[ERROR] inserting/city: {e}")
-
 
 def get_result_data(content,url):
     soup = BeautifulSoup(content, 'html.parser')
@@ -166,7 +194,6 @@ def read_lines_from_file(filename: str) -> list:
         logger.error(f"Ошибка при чтении файла '{filename}': {e}")
         return []
 
-
 def get_files() -> list:
     # Путь к папке "Downloads"
     folder_path = "Downloads"
@@ -185,7 +212,6 @@ def get_files() -> list:
         logger.error(f"Папка '{folder_path}' не найдена.")
     except PermissionError:
         logger.error(f"Недостаточно прав для доступа к папке '{folder_path}'.")
-
 
 async def converter_data(link: str, header: dict, payload: dict, proxy: str):
     global results_data
@@ -232,6 +258,9 @@ async def converter_data(link: str, header: dict, payload: dict, proxy: str):
         print(f"\rSUCCESS {datetime.now()} i: {len(results_data['restaraunts_data'])} xml: No defined rest: {clear_data['name']}", end='', flush=True)
         
         if len(results_data['restaraunts_data']) == 500:
+            batch_counter = await load_batch_counter()
+            batch_counter+=500
+            await save_batch_counter(batch_counter)
             logger.info(f"starting create pool and connecting to database")
             async with aiomysql.create_pool(host=DB_HOST, user=DB_USER, password=DB_PASS, db=DB_NAME) as pool:
                 async with pool.acquire() as connection:
@@ -261,12 +290,15 @@ async def process_link(link, proxy_dict, payload):
 async def main():
     payload = {}
     files = get_files()
-    for file in files:
+    batch_counter = await load_batch_counter()
+    start_index = batch_counter // 50000
+    for file in files[start_index:]:
         today = datetime.now()
         today_day = today.day
-        
+        batch_counter = await load_batch_counter()
+        block_batch = batch_counter % 50000
         data_from_file = read_lines_from_file(file)
-        for link in data_from_file:
+        for link in data_from_file[block_batch:]:
             random_number4 = random.randint(1000,9999)
             proxy_dict = {
                 "http://sashabodiul07:7UMNo7iRr6@91.124.86.145:50100":{
