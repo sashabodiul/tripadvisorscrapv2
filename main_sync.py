@@ -216,7 +216,7 @@ def get_files() -> list:
 async def converter_data(link: str, header: dict, payload: dict, proxy: str):
     global results_data
     async with aiohttp.ClientSession(trust_env=False) as session:
-        async with session.get(url=link, headers=header, proxy=proxy, timeout=12) as response:
+        async with session.get(url=link, headers=header, proxy=proxy, timeout=50) as response:
             if response.status == 200:
                 if "Please enable JS and disable any ad blocker" not in await response.text():
                     content = await response.text()
