@@ -79,7 +79,7 @@ def main():
         port = listen_ip[-5:]
         print(f"Port: {port}")
         
-        chrome_drive_path = Service(executable_path="chromedriver/chromedriver.exe")
+        chrome_drive_path = Service(executable_path="chromedriver/chromedriver")
         options = webdriver.ChromeOptions()
         options.debugger_address = listen_ip.strip()
         
