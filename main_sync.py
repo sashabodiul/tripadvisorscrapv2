@@ -217,7 +217,7 @@ def get_files() -> list:
         logger.error(f"Недостаточно прав для доступа к папке '{folder_path}'.")
 
 async def converter_data(link: str, header: dict, payload: dict, proxy: str):
-    await asyncio.sleep(1)
+    await asyncio.sleep(random.randint(1,3))
     global results_data
     async with aiohttp.ClientSession(trust_env=False) as session:
         async with session.get(url=link, headers=header, proxy=proxy, timeout=50) as response:
@@ -285,8 +285,10 @@ async def converter_data(link: str, header: dict, payload: dict, proxy: str):
 async def process_link(link, header, payload, proxy, semaphore):
     async with semaphore:
         try:
-            await converter_data(link, header, payload, proxy)
-            await asyncio.sleep(1)
+            res = await converter_data(link, header, payload, proxy)
+            if res is None:
+                await asyncio.sleep(60*60*4)
+            await asyncio.sleep(random.randint(1,3))
         except Exception as e:
             logger.error(f"Error processing {link} with proxy {proxy}: {e}")
 
